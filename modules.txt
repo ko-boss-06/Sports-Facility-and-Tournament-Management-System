@@ -1,0 +1,7 @@
+User Authentication & Role Management
+Sports Facility Management
+Facility Booking Management
+Tournament Management
+Team & Player Management
+Match Scheduling & Result Management
+Equipment Management
