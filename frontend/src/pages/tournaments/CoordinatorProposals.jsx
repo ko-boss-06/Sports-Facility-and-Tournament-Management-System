@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Layout from "../../components/Layout";
 
 const API_URL = "http://127.0.0.1:8000/api/v1";
 
@@ -41,7 +42,9 @@ function CoordinatorProposals() {
       if (err.response?.status === 401) {
         setError("Your session has expired. Please login again.");
       } else if (err.response?.status === 403) {
-        setError("You do not have permission to view tournament proposals.");
+        setError(
+          "You do not have permission to view tournament proposals."
+        );
       } else {
         setError(
           err.response?.data?.detail ||
@@ -97,154 +100,183 @@ function CoordinatorProposals() {
   };
 
   return (
-    <div className="tournament-page">
-      <div className="tournament-card coordinator-proposals-card">
-        <div className="tournament-header">
-          <h1>Tournament Proposals</h1>
-          <p>
-            Review tournament proposals submitted by coaches
-            and forward them to the PE for approval.
-          </p>
-        </div>
+    <Layout>
+      <div className="page-container">
+        <div className="page-header">
+          <div>
+            <h1>Tournament Proposals</h1>
 
-        {error && (
-          <div className="form-error">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="form-success">
-            {message}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="loading-message">
-            Loading tournament proposals...
-          </div>
-        ) : proposals.length === 0 ? (
-          <div className="empty-message">
-            <h3>No Pending Proposals</h3>
             <p>
-              There are currently no tournament proposals
-              waiting for review.
+              Review tournament proposals submitted by coaches
+              and forward them to the PE for approval.
             </p>
           </div>
-        ) : (
-          <div className="proposal-list">
-            {proposals.map((proposal) => (
-              <div
-                className="proposal-card"
-                key={proposal.id}
-              >
-                <div className="proposal-card-header">
-                  <div>
-                    <h2>{proposal.name}</h2>
-                    <p className="proposal-sport">
-                      {proposal.sport}
-                    </p>
+        </div>
+
+        <div className="content-card coordinator-proposals-card">
+
+          {error && (
+            <div className="form-error">
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div className="form-success">
+              {message}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="loading-message">
+              Loading tournament proposals...
+            </div>
+          ) : proposals.length === 0 ? (
+            <div className="empty-message">
+              <h3>No Pending Proposals</h3>
+
+              <p>
+                There are currently no tournament proposals
+                waiting for review.
+              </p>
+            </div>
+          ) : (
+            <div className="proposal-list">
+
+              {proposals.map((proposal) => (
+                <div
+                  className="proposal-card"
+                  key={proposal.id}
+                >
+                  <div className="proposal-card-header">
+                    <div>
+                      <h2>{proposal.name}</h2>
+
+                      <p className="proposal-sport">
+                        {proposal.sport}
+                      </p>
+                    </div>
+
+                    <span className="status-badge">
+                      {proposal.status}
+                    </span>
                   </div>
 
-                  <span className="status-badge">
-                    {proposal.status}
-                  </span>
+                  <div className="proposal-details">
+
+                    <div className="detail-item">
+                      <strong>Proposed Date</strong>
+
+                      <span>
+                        {new Date(
+                          proposal.proposed_date
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <strong>Registration Deadline</strong>
+
+                      <span>
+                        {new Date(
+                          proposal.registration_deadline
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <strong>Maximum Teams</strong>
+
+                      <span>
+                        {proposal.max_teams}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <strong>Venue</strong>
+
+                      <span>
+                        {proposal.venue || "Not specified"}
+                      </span>
+                    </div>
+
+                    <div className="detail-item">
+                      <strong>Facility ID</strong>
+
+                      <span>
+                        {proposal.facility_id || "Not specified"}
+                      </span>
+                    </div>
+
+                  </div>
+
+                  {proposal.description && (
+                    <div className="proposal-description">
+                      <strong>Description</strong>
+
+                      <p>
+                        {proposal.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {proposal.rules && (
+                    <div className="proposal-description">
+                      <strong>Rules</strong>
+
+                      <p>
+                        {proposal.rules}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="proposal-actions">
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() =>
+                        handleForward(proposal.id)
+                      }
+                      disabled={
+                        forwardingId === proposal.id
+                      }
+                    >
+                      {forwardingId === proposal.id
+                        ? "Forwarding..."
+                        : "Forward to PE"}
+                    </button>
+                  </div>
                 </div>
+              ))}
 
-                <div className="proposal-details">
-                  <div className="detail-item">
-                    <strong>Proposed Date</strong>
-                    <span>
-                      {new Date(
-                        proposal.proposed_date
-                      ).toLocaleString()}
-                    </span>
-                  </div>
+            </div>
+          )}
 
-                  <div className="detail-item">
-                    <strong>Registration Deadline</strong>
-                    <span>
-                      {new Date(
-                        proposal.registration_deadline
-                      ).toLocaleString()}
-                    </span>
-                  </div>
+          <div className="form-actions">
 
-                  <div className="detail-item">
-                    <strong>Maximum Teams</strong>
-                    <span>
-                      {proposal.max_teams}
-                    </span>
-                  </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() =>
+                navigate("/dashboard/coordinator")
+              }
+            >
+              Back to Dashboard
+            </button>
 
-                  <div className="detail-item">
-                    <strong>Venue</strong>
-                    <span>
-                      {proposal.venue || "Not specified"}
-                    </span>
-                  </div>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={fetchProposals}
+              disabled={loading}
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
 
-                  <div className="detail-item">
-                    <strong>Facility ID</strong>
-                    <span>
-                      {proposal.facility_id || "Not specified"}
-                    </span>
-                  </div>
-                </div>
-
-                {proposal.description && (
-                  <div className="proposal-description">
-                    <strong>Description</strong>
-                    <p>{proposal.description}</p>
-                  </div>
-                )}
-
-                {proposal.rules && (
-                  <div className="proposal-description">
-                    <strong>Rules</strong>
-                    <p>{proposal.rules}</p>
-                  </div>
-                )}
-
-                <div className="proposal-actions">
-                  <button
-                    className="primary-button"
-                    onClick={() =>
-                      handleForward(proposal.id)
-                    }
-                    disabled={forwardingId === proposal.id}
-                  >
-                    {forwardingId === proposal.id
-                      ? "Forwarding..."
-                      : "Forward to PE"}
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
-        )}
-
-        <div className="form-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() =>
-              navigate("/dashboard/coordinator")
-            }
-          >
-            Back to Dashboard
-          </button>
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={fetchProposals}
-          >
-            Refresh
-          </button>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
 

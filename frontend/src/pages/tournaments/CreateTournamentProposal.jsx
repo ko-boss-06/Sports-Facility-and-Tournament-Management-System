@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Layout from "../../components/Layout";
 
 const API_URL = "http://127.0.0.1:8000/api/v1";
 
@@ -128,162 +129,239 @@ function CreateTournamentProposal() {
   };
 
   return (
-    <div className="tournament-page">
-      <div className="tournament-card">
-        <div className="tournament-header">
-          <h1>Create Tournament Proposal</h1>
-          <p>
-            Submit a new tournament proposal for review by the Sports
-            Coordinator.
-          </p>
+    <Layout>
+
+      <div className="page-container">
+
+        {/* Page Header */}
+        <div className="page-header">
+          <div>
+            <h1>Create Tournament Proposal</h1>
+
+            <p>
+              Submit a new tournament proposal for review by
+              the Sports Coordinator.
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>
-              Tournament Name <span>*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              placeholder="Enter tournament name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
 
-          <div className="form-group">
-            <label>
-              Sport <span>*</span>
-            </label>
-            <input
-              type="text"
-              name="sport"
-              placeholder="Example: Basketball"
-              value={formData.sport}
-              onChange={handleChange}
-            />
-          </div>
+        {/* Tournament Form */}
+        <div className="content-card tournament-form-card">
 
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              name="description"
-              placeholder="Enter tournament description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-            />
-          </div>
+          <h2>Tournament Details</h2>
 
-          <div className="form-row">
+          <form
+            className="tournament-form"
+            onSubmit={handleSubmit}
+          >
+
+            {/* Tournament Name */}
             <div className="form-group">
-              <label>
-                Proposed Date & Time <span>*</span>
+              <label htmlFor="name">
+                Tournament Name <span>*</span>
               </label>
+
               <input
-                type="datetime-local"
-                name="proposed_date"
-                value={formData.proposed_date}
+                id="name"
+                type="text"
+                name="name"
+                placeholder="Enter tournament name"
+                value={formData.name}
                 onChange={handleChange}
               />
             </div>
 
+
+            {/* Sport */}
             <div className="form-group">
-              <label>
-                Registration Deadline <span>*</span>
+              <label htmlFor="sport">
+                Sport <span>*</span>
               </label>
-              <input
-                type="datetime-local"
-                name="registration_deadline"
-                value={formData.registration_deadline}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
 
-          <div className="form-group">
-            <label>Venue</label>
-            <input
-              type="text"
-              name="venue"
-              placeholder="Example: College Sports Complex"
-              value={formData.venue}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Facility ID</label>
               <input
-                type="number"
-                name="facility_id"
-                placeholder="Example: 1"
-                min="1"
-                value={formData.facility_id}
+                id="sport"
+                type="text"
+                name="sport"
+                placeholder="Example: Basketball"
+                value={formData.sport}
                 onChange={handleChange}
               />
             </div>
 
-            <div className="form-group">
-              <label>
-                Maximum Teams <span>*</span>
+
+            {/* Description */}
+            <div className="form-group form-group-full">
+              <label htmlFor="description">
+                Description
               </label>
+
+              <textarea
+                id="description"
+                name="description"
+                placeholder="Enter tournament description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="4"
+              />
+            </div>
+
+
+            {/* Date and Deadline */}
+            <div className="form-row">
+
+              <div className="form-group">
+                <label htmlFor="proposed_date">
+                  Proposed Date & Time <span>*</span>
+                </label>
+
+                <input
+                  id="proposed_date"
+                  type="datetime-local"
+                  name="proposed_date"
+                  value={formData.proposed_date}
+                  onChange={handleChange}
+                />
+              </div>
+
+
+              <div className="form-group">
+                <label htmlFor="registration_deadline">
+                  Registration Deadline <span>*</span>
+                </label>
+
+                <input
+                  id="registration_deadline"
+                  type="datetime-local"
+                  name="registration_deadline"
+                  value={formData.registration_deadline}
+                  onChange={handleChange}
+                />
+              </div>
+
+            </div>
+
+
+            {/* Venue */}
+            <div className="form-group">
+              <label htmlFor="venue">
+                Venue
+              </label>
+
               <input
-                type="number"
-                name="max_teams"
-                placeholder="Example: 16"
-                min="1"
-                value={formData.max_teams}
+                id="venue"
+                type="text"
+                name="venue"
+                placeholder="Example: College Sports Complex"
+                value={formData.venue}
                 onChange={handleChange}
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Rules</label>
-            <textarea
-              name="rules"
-              placeholder="Enter tournament rules"
-              value={formData.rules}
-              onChange={handleChange}
-              rows="4"
-            />
-          </div>
 
-          {error && (
-            <div className="form-error">
-              {error}
+            {/* Facility and Teams */}
+            <div className="form-row">
+
+              <div className="form-group">
+                <label htmlFor="facility_id">
+                  Facility ID
+                </label>
+
+                <input
+                  id="facility_id"
+                  type="number"
+                  name="facility_id"
+                  placeholder="Example: 1"
+                  min="1"
+                  value={formData.facility_id}
+                  onChange={handleChange}
+                />
+              </div>
+
+
+              <div className="form-group">
+                <label htmlFor="max_teams">
+                  Maximum Teams <span>*</span>
+                </label>
+
+                <input
+                  id="max_teams"
+                  type="number"
+                  name="max_teams"
+                  placeholder="Example: 16"
+                  min="1"
+                  value={formData.max_teams}
+                  onChange={handleChange}
+                />
+              </div>
+
             </div>
-          )}
 
-          {message && (
-            <div className="form-success">
-              {message}
+
+            {/* Rules */}
+            <div className="form-group form-group-full">
+              <label htmlFor="rules">
+                Rules
+              </label>
+
+              <textarea
+                id="rules"
+                name="rules"
+                placeholder="Enter tournament rules"
+                value={formData.rules}
+                onChange={handleChange}
+                rows="4"
+              />
             </div>
-          )}
 
-          <div className="form-actions">
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => navigate("/dashboard/coach")}
-            >
-              Back to Dashboard
-            </button>
 
-            <button
-              type="submit"
-              className="primary-button"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit Proposal"}
-            </button>
-          </div>
-        </form>
+            {/* Error */}
+            {error && (
+              <div className="form-error form-group-full">
+                {error}
+              </div>
+            )}
+
+
+            {/* Success */}
+            {message && (
+              <div className="form-success form-group-full">
+                {message}
+              </div>
+            )}
+
+
+            {/* Actions */}
+            <div className="form-actions form-group-full">
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => navigate("/dashboard/coach")}
+              >
+                Back to Dashboard
+              </button>
+
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={loading}
+              >
+                {loading
+                  ? "Submitting..."
+                  : "Submit Proposal"}
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
       </div>
-    </div>
+
+    </Layout>
   );
 }
 

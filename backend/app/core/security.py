@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from jose import JWTError, jwt
 from pwdlib import PasswordHash
@@ -6,7 +6,10 @@ from pwdlib import PasswordHash
 from app.config import settings
 
 
-# Password hashing
+# ============================================================
+# PASSWORD HASHING
+# ============================================================
+
 password_hash = PasswordHash.recommended()
 
 
@@ -20,17 +23,23 @@ def verify_password(password: str, hashed_password: str) -> bool:
     return password_hash.verify(password, hashed_password)
 
 
+# ============================================================
+# CREATE ACCESS TOKEN
+# ============================================================
+
 def create_access_token(data: dict) -> str:
-    """Create a JWT access token."""
+    """
+    Create a JWT access token.
+
+    The token does not have an automatic expiration time.
+    The user remains logged in until they explicitly log out.
+    """
 
     to_encode = data.copy()
 
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-
+    # Add token creation time
     to_encode.update({
-        "exp": expire
+        "iat": datetime.now(timezone.utc)
     })
 
     return jwt.encode(
@@ -40,10 +49,15 @@ def create_access_token(data: dict) -> str:
     )
 
 
+# ============================================================
+# DECODE ACCESS TOKEN
+# ============================================================
+
 def decode_access_token(token: str) -> dict | None:
     """Decode and verify a JWT token."""
 
     try:
+
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
@@ -53,4 +67,5 @@ def decode_access_token(token: str) -> dict | None:
         return payload
 
     except JWTError:
+
         return None

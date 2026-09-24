@@ -111,3 +111,15 @@ class TeamReject(BaseModel):
         min_length=1,
         max_length=1000
     )
+
+class ExternalTeamStatusRequest(BaseModel):
+    team_id: int = Field(
+        ...,
+        gt=0
+    )
+
+    external_contact: str = Field(
+        ...,
+        min_length=1,
+        max_length=255
+    )

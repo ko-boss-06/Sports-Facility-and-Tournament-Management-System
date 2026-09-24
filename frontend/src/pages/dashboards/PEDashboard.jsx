@@ -1,45 +1,186 @@
 import { useNavigate } from "react-router-dom";
-import LogoutButton from "../../components/LogoutButton";
+import Layout from "../../components/Layout";
 
 function PEDashboard() {
   const navigate = useNavigate();
 
   return (
-    <div>
-      <h1>PE Dashboard</h1>
+    <Layout>
 
-      <p>
-        Welcome to the Physical Education Head Dashboard.
-      </p>
+      <div className="page-container">
 
-      <LogoutButton />
+        {/* =================================================
+            PAGE HEADER
+        ================================================= */}
 
-      <hr />
+        <div className="page-header">
 
-      <h2>PE Management</h2>
+          <div>
 
-      <button
-        onClick={() =>
-          navigate("/tournaments/approvals")
-        }
-      >
-        Tournament Approvals
-      </button>
-      <button
-        onClick={() =>
-          navigate("/teams/approvals")
-        }
-      >
-        Team Approvals
-      </button>
-      <ul>
-        <li>Manage Sports Facilities</li>
-        <li>Approve Tournament Proposals</li>
-        <li>Approve Registered Teams</li>
-        <li>View Tournament Schedules</li>
-        <li>View Scores and Results</li>
-      </ul>
-    </div>
+            <h1>PE Dashboard</h1>
+
+            <p>
+              Manage tournament approvals, team registrations,
+              sports facilities, and sports administration
+              activities.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        {/* =================================================
+            PE SERVICES
+        ================================================= */}
+
+        <div className="content-card">
+
+          <h2>PE Services</h2>
+
+
+          <div className="dashboard-grid">
+
+            {/* =================================================
+                TOURNAMENT APPROVALS
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+              onClick={() =>
+                navigate("/tournaments/approvals")
+              }
+            >
+
+              <h3>
+                Tournament Approvals
+              </h3>
+
+              <p>
+                Review and approve tournament proposals
+                submitted by coaches.
+              </p>
+
+            </button>
+
+
+            {/* =================================================
+                TEAM APPROVALS
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+              onClick={() =>
+                navigate("/teams/approvals")
+              }
+            >
+
+              <h3>
+                Team Approvals
+              </h3>
+
+              <p>
+                Review submitted team registrations and
+                approve or reject proposals.
+              </p>
+
+            </button>
+
+
+            {/* =================================================
+                TOURNAMENT MANAGEMENT
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+            >
+
+              <h3>
+                Tournament Management
+              </h3>
+
+              <p>
+                Manage approved tournaments and related
+                sports activities.
+              </p>
+
+            </button>
+
+
+            {/* =================================================
+                TEAM MANAGEMENT
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+            >
+
+              <h3>
+                Team Management
+              </h3>
+
+              <p>
+                View and manage registered sports teams.
+              </p>
+
+            </button>
+
+
+            {/* =================================================
+                FACILITY MANAGEMENT
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+              onClick={() =>
+                navigate("/facilities/manage")
+              }
+            >
+
+              <h3>
+                Facility Management
+              </h3>
+
+              <p>
+                Add, update, deactivate and manage
+                sports facilities.
+              </p>
+
+            </button>
+
+
+            {/* =================================================
+                SPORTS ACTIVITIES
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+            >
+
+              <h3>
+                Sports Activities
+              </h3>
+
+              <p>
+                Monitor sports events and related
+                activities.
+              </p>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </Layout>
   );
 }
 

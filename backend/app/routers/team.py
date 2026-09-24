@@ -9,7 +9,8 @@ from app.schemas.team import (
     TeamCreate,
     ExternalTeamCreate,
     TeamResponse,
-    TeamReject
+    TeamReject,
+    ExternalTeamStatusRequest
 )
 from app.core.dependencies import get_current_user
 from app.core.permissions import (
@@ -363,7 +364,66 @@ def reject_team(
 
 
 # ---------------------------------------------------------
-# AUTHENTICATED USERS - View Team
+# INTERNAL STUDENT - View My Team Proposals
+# ---------------------------------------------------------
+@router.get(
+    "/my-proposals",
+    response_model=list[TeamResponse]
+)
+def get_my_team_proposals(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(INTERNAL_STUDENT)
+    )
+):
+    teams = (
+        db.query(Team)
+        .filter(
+            Team.registered_by == current_user.id
+        )
+        .order_by(
+            Team.created_at.desc()
+        )
+        .all()
+    )
+
+    return teams
+
+# ---------------------------------------------------------
+# EXTERNAL STUDENT - View Team Proposal Status
+# No Login Required
+# ---------------------------------------------------------
+@router.post(
+    "/external/status",
+    response_model=TeamResponse
+)
+def get_external_team_status(
+    status_data: ExternalTeamStatusRequest,
+    db: Session = Depends(get_db)
+):
+    team = (
+        db.query(Team)
+        .filter(
+            Team.id == status_data.team_id,
+            Team.registration_type == "EXTERNAL",
+            Team.external_contact == status_data.external_contact
+        )
+        .first()
+    )
+
+    if not team:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "No external team registration was found "
+                "with the provided Team ID and contact."
+            )
+        )
+
+    return team
+
+# ---------------------------------------------------------
+# AUTHENTICATED USERS - View Single Team
 # ---------------------------------------------------------
 @router.get(
     "/{team_id}",
@@ -378,7 +438,9 @@ def get_team(
 ):
     team = (
         db.query(Team)
-        .filter(Team.id == team_id)
+        .filter(
+            Team.id == team_id
+        )
         .first()
     )
 
