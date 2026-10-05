@@ -45,15 +45,7 @@ BOOKING_SLOTS = [
 
 
 # ============================================================
-# BOOKING WINDOW
-#
-# Before 10:00 PM:
-#     TODAY is available
-#
-# At/after 10:00 PM:
-#     TOMORROW is available
-#
-# Timezone: India
+# INDIA TIMEZONE
 # ============================================================
 
 INDIA_TIMEZONE = ZoneInfo("Asia/Kolkata")
@@ -61,22 +53,28 @@ INDIA_TIMEZONE = ZoneInfo("Asia/Kolkata")
 BOOKING_OPEN_TIME = time(22, 0)
 
 
+# ============================================================
+# CURRENT INDIA TIME
+# ============================================================
+
 def get_current_india_time():
     """
-    Return current India date/time.
+    Return current date and time in India.
     """
     return datetime.now(INDIA_TIMEZONE)
 
 
+# ============================================================
+# ACTIVE BOOKING DATE
+# ============================================================
+
 def get_active_booking_date():
     """
-    Return the only date currently available for booking.
-
     Before 10 PM:
-        Today
+        Today is available for booking.
 
-    At or after 10 PM:
-        Tomorrow
+    At/after 10 PM:
+        Tomorrow is available for booking.
     """
 
     now = get_current_india_time()
@@ -87,26 +85,33 @@ def get_active_booking_date():
     return now.date() + timedelta(days=1)
 
 
+# ============================================================
+# BOOKING DATE VALIDATION
+# ============================================================
+
 def get_booking_rule_error(booking_date: date):
-    """
-    Validate whether the requested booking date is
-    currently open.
-    """
 
     now = get_current_india_time()
 
     active_date = get_active_booking_date()
 
+    # Past date
     if booking_date < now.date():
+
         return "Booking date cannot be in the past."
 
+    # Wrong date
     if booking_date != active_date:
 
         if now.time() < BOOKING_OPEN_TIME:
 
-            tomorrow = now.date() + timedelta(days=1)
+            tomorrow = (
+                now.date() +
+                timedelta(days=1)
+            )
 
             if booking_date == tomorrow:
+
                 return (
                     f"Booking for {booking_date} opens "
                     f"at 10:00 PM today."
@@ -125,10 +130,11 @@ def get_booking_rule_error(booking_date: date):
     return None
 
 
+# ============================================================
+# GET SLOT TIMES
+# ============================================================
+
 def get_slot_times(slot: str):
-    """
-    Convert slot string into start and end time.
-    """
 
     for start, end in BOOKING_SLOTS:
 
@@ -146,6 +152,54 @@ def get_slot_times(slot: str):
 
 
 # ============================================================
+# SLOT STATUS
+# ============================================================
+
+def get_slot_status(
+    booking_date: date,
+    start_time: time,
+    end_time: time,
+    is_booked: bool
+):
+    """
+    Return one of:
+
+        BOOKED
+        EXPIRED
+        AVAILABLE
+    """
+
+    # --------------------------------------------------------
+    # BOOKED ALWAYS HAS PRIORITY
+    # --------------------------------------------------------
+
+    if is_booked:
+        return "BOOKED"
+
+    # --------------------------------------------------------
+    # Check whether the slot has expired
+    #
+    # Expiration only matters for TODAY.
+    # --------------------------------------------------------
+
+    now = get_current_india_time()
+
+    if booking_date == now.date():
+
+        current_time = now.time()
+
+        if current_time >= end_time:
+
+            return "EXPIRED"
+
+    # --------------------------------------------------------
+    # Otherwise available
+    # --------------------------------------------------------
+
+    return "AVAILABLE"
+
+
+# ============================================================
 # AVAILABILITY
 # ============================================================
 
@@ -157,7 +211,7 @@ def get_booking_availability(
 ):
 
     # --------------------------------------------------------
-    # Booking date validation
+    # 1. Validate booking date
     # --------------------------------------------------------
 
     booking_rule_error = get_booking_rule_error(
@@ -172,12 +226,14 @@ def get_booking_availability(
         )
 
     # --------------------------------------------------------
-    # Find facility
+    # 2. Find facility
     # --------------------------------------------------------
 
     facility = (
         db.query(Facility)
-        .filter(Facility.id == facility_id)
+        .filter(
+            Facility.id == facility_id
+        )
         .first()
     )
 
@@ -189,7 +245,7 @@ def get_booking_availability(
         )
 
     # --------------------------------------------------------
-    # Facility availability
+    # 3. Check facility availability
     # --------------------------------------------------------
 
     if not facility.availability_status:
@@ -207,18 +263,26 @@ def get_booking_availability(
         )
 
     # --------------------------------------------------------
-    # Existing bookings
+    # 4. Get existing confirmed bookings
     # --------------------------------------------------------
 
     bookings = (
         db.query(FacilityBooking)
         .filter(
             FacilityBooking.facility_id == facility_id,
-            FacilityBooking.booking_date == booking_date,
-            FacilityBooking.status == "CONFIRMED"
+
+            FacilityBooking.booking_date
+            == booking_date,
+
+            FacilityBooking.status
+            == "CONFIRMED"
         )
         .all()
     )
+
+    # --------------------------------------------------------
+    # Create booked slot lookup
+    # --------------------------------------------------------
 
     booked_slots = {
         (
@@ -229,7 +293,7 @@ def get_booking_availability(
     }
 
     # --------------------------------------------------------
-    # Generate slots
+    # 5. Generate slots
     # --------------------------------------------------------
 
     slots = []
@@ -241,15 +305,35 @@ def get_booking_availability(
             end
         ) in booked_slots
 
+        start_time = time.fromisoformat(start)
+        end_time = time.fromisoformat(end)
+
+        slot_status = get_slot_status(
+            booking_date=booking_date,
+            start_time=start_time,
+            end_time=end_time,
+            is_booked=is_booked
+        )
+
         slots.append({
+
             "slot": f"{start}-{end}",
+
             "start_time": start,
+
             "end_time": end,
-            "available": not is_booked
+
+            # Existing field
+            "available": (
+                slot_status == "AVAILABLE"
+            ),
+
+            # NEW FIELD
+            "status": slot_status
         })
 
     # --------------------------------------------------------
-    # Booking window information
+    # 6. Booking window information
     # --------------------------------------------------------
 
     now = get_current_india_time()
@@ -272,13 +356,26 @@ def get_booking_availability(
             "10:00 PM previous day"
         )
 
+    # --------------------------------------------------------
+    # 7. Return response
+    # --------------------------------------------------------
+
     return {
+
         "facility_id": facility.id,
+
         "facility_name": facility.name,
+
         "booking_date": booking_date,
+
         "booking_window": booking_window,
+
         "booking_opens_at": booking_opens_at,
+
         "active_booking_date": active_date,
+
+        "current_india_time": now.isoformat(),
+
         "slots": slots
     }
 
@@ -322,7 +419,8 @@ def create_booking(
     facility = (
         db.query(Facility)
         .filter(
-            Facility.id == booking_data.facility_id
+            Facility.id
+            == booking_data.facility_id
         )
         .first()
     )
@@ -368,7 +466,9 @@ def create_booking(
 
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Team name is required for this facility"
+                detail=(
+                    "Team name is required for this facility"
+                )
             )
 
         if facility.requires_captain:
@@ -416,7 +516,9 @@ def create_booking(
 
     if facility.requires_captain:
 
-        captain_name = booking_data.captain_name.strip()
+        captain_name = (
+            booking_data.captain_name.strip()
+        )
 
         captain_exists = any(
             member.lower() == captain_name.lower()
@@ -428,7 +530,8 @@ def create_booking(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    "Captain must be included in the team members list."
+                    "Captain must be included "
+                    "in the team members list."
                 )
             )
 
@@ -441,7 +544,26 @@ def create_booking(
     )
 
     # --------------------------------------------------------
-    # 7. Check facility slot conflict
+    # 7. IMPORTANT:
+    # Prevent booking an expired slot
+    # --------------------------------------------------------
+
+    now = get_current_india_time()
+
+    if booking_data.booking_date == now.date():
+
+        if now.time() >= end_time:
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "This booking slot has expired "
+                    "and can no longer be booked."
+                )
+            )
+
+    # --------------------------------------------------------
+    # 8. Check facility slot conflict
     # --------------------------------------------------------
 
     existing_booking = (
@@ -473,13 +595,14 @@ def create_booking(
         )
 
     # --------------------------------------------------------
-    # 8. One student = one booking per day
+    # 9. One student = one booking per day
     # --------------------------------------------------------
 
     student_daily_booking = (
         db.query(FacilityBooking)
         .filter(
-            FacilityBooking.student_id == current_user.id,
+            FacilityBooking.student_id
+            == current_user.id,
 
             FacilityBooking.booking_date
             == booking_data.booking_date,
@@ -495,13 +618,14 @@ def create_booking(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(
-                "You already have a facility booking for this day. "
-                "A student can book only one slot per day."
+                "You already have a facility booking "
+                "for this day. A student can book only "
+                "one slot per day."
             )
         )
 
     # --------------------------------------------------------
-    # 9. Check team members' daily bookings
+    # 10. Check team members' daily bookings
     # --------------------------------------------------------
 
     existing_day_bookings = (
@@ -547,26 +671,35 @@ def create_booking(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=(
-                    f"The following team member(s) already have "
-                    f"a facility booking on this day: "
+                    f"The following team member(s) already "
+                    f"have a facility booking on this day: "
                     f"{member_names}"
                 )
             )
 
     # --------------------------------------------------------
-    # 10. Create booking
+    # 11. Create booking
     # --------------------------------------------------------
 
     booking = FacilityBooking(
+
         facility_id=booking_data.facility_id,
+
         student_id=current_user.id,
+
         booking_date=booking_data.booking_date,
+
         start_time=start_time,
+
         end_time=end_time,
 
-        team_name=booking_data.team_name.strip(),
+        team_name=(
+            booking_data.team_name.strip()
+        ),
 
-        captain_name=booking_data.captain_name.strip(),
+        captain_name=(
+            booking_data.captain_name.strip()
+        ),
 
         team_members=", ".join(team_members),
 
@@ -633,6 +766,7 @@ def get_booking(
         db.query(FacilityBooking)
         .filter(
             FacilityBooking.id == booking_id,
+
             FacilityBooking.student_id
             == current_user.id
         )
@@ -670,6 +804,7 @@ def cancel_booking(
         db.query(FacilityBooking)
         .filter(
             FacilityBooking.id == booking_id,
+
             FacilityBooking.student_id
             == current_user.id
         )
@@ -687,7 +822,9 @@ def cancel_booking(
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only confirmed bookings can be cancelled"
+            detail=(
+                "Only confirmed bookings can be cancelled"
+            )
         )
 
     booking.status = "CANCELLED"

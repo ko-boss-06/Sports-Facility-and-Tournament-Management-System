@@ -30,8 +30,10 @@ import ApprovedTournaments from "./pages/tournaments/ApprovedTournaments";
 import CreateTournamentProposal from "./pages/tournaments/CreateTournamentProposal";
 import CoordinatorProposals from "./pages/tournaments/CoordinatorProposals";
 import PETournamentApprovals from "./pages/tournaments/PETournamentApprovals";
+import TournamentManagement from "./pages/tournaments/TournamentManagement";
 
 import TournamentProposals from "./pages/coach/TournamentProposals";
+import StudentTournaments from "./pages/student/StudentTournaments";
 import PEFacilityManagement from "./pages/pe/PEFacilityManagement";
 // =========================================================
 // TEAM PAGES
@@ -470,6 +472,19 @@ function App() {
           }
         />
 
+        {/* =================================================
+            COORDINATOR - TOURNAMENT MANAGEMENT
+        ================================================= */}
+
+        <Route
+          path="/tournaments/manage"
+          element={
+            <ProtectedRoute allowedRole="SPORTS_COORDINATOR">
+              <TournamentManagement />
+            </ProtectedRoute>
+          }
+        />
+
 
         {/* =================================================
             COORDINATOR - TOURNAMENT PROPOSALS
@@ -558,6 +573,21 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* =================================================
+                INTERNAL STUDENT - AVAILABLE TOURNAMENTS
+            ================================================= */}
+
+            <Route
+              path="/student/tournaments"
+              element={
+                <ProtectedRoute
+                  allowedRole="INTERNAL_STUDENT"
+                >
+                  <StudentTournaments />
+                </ProtectedRoute>
+              }
+            />
 
 
         {/* =================================================

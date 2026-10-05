@@ -12,8 +12,67 @@ const getAuthHeaders = () => {
   return {
     headers: {
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   };
+};
+
+
+// ============================================================
+// FORMAT BACKEND ERROR
+// ============================================================
+
+export const getBookingErrorMessage = (error) => {
+  const detail = error?.response?.data?.detail;
+
+  // FastAPI validation errors
+  //
+  // Example:
+  //
+  // [
+  //   {
+  //     "type": "missing",
+  //     "loc": ["body", "team_name"],
+  //     "msg": "Field required"
+  //   }
+  // ]
+  //
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === "string") {
+          return item;
+        }
+
+        if (item?.msg) {
+          const location = Array.isArray(item.loc)
+            ? item.loc.join(" → ")
+            : "";
+
+          return location
+            ? `${location}: ${item.msg}`
+            : item.msg;
+        }
+
+        return "Invalid booking data.";
+      })
+      .join(" | ");
+  }
+
+
+  // Normal backend error
+  if (typeof detail === "string") {
+    return detail;
+  }
+
+
+  // Other axios errors
+  if (error?.message) {
+    return error.message;
+  }
+
+
+  return "Booking failed. Please try again.";
 };
 
 
@@ -29,9 +88,11 @@ export const getBookingAvailability = async (
     `${API_URL}/bookings/availability`,
     {
       params: {
-        facility_id: facilityId,
+        facility_id: Number(facilityId),
         booking_date: bookingDate,
       },
+
+      ...getAuthHeaders(),
     }
   );
 
@@ -42,53 +103,60 @@ export const getBookingAvailability = async (
 // ============================================================
 // CREATE FACILITY BOOKING
 // ============================================================
-//
-// Sends:
-// - facility
-// - booking date
-// - selected slot
-// - team name
-// - captain name
-// - team members
-//
-// teamMembers should be an array:
-//
-// [
-//   "Captain",
-//   "Member 2",
-//   "Member 3"
-// ]
-//
-// ============================================================
 
 export const createBooking = async (
   facilityId,
   bookingDate,
   slot,
-  teamName,
-  captainName,
-  teamMembers
+  teamName = "",
+  captainName = "",
+  teamMembers = []
 ) => {
-  const response = await axios.post(
-    `${API_URL}/bookings`,
-    {
-      facility_id: facilityId,
-      booking_date: bookingDate,
-      slot: slot,
+  try {
+    const cleanedTeamMembers =
+      Array.isArray(teamMembers)
+        ? teamMembers
+            .map((member) =>
+              String(member).trim()
+            )
+            .filter(Boolean)
+        : [];
 
-      team_name: teamName,
-      captain_name: captainName,
 
-      // Convert array into a readable string
-      // for the backend/database.
-      team_members: Array.isArray(teamMembers)
-        ? teamMembers.join(", ")
-        : teamMembers,
-    },
-    getAuthHeaders()
-  );
+    const response = await axios.post(
+      `${API_URL}/bookings`,
+      {
+        facility_id: Number(facilityId),
 
-  return response.data;
+        booking_date: bookingDate,
+
+        slot: slot,
+
+        team_name:
+          String(teamName || "").trim(),
+
+        captain_name:
+          String(captainName || "").trim(),
+
+        team_members:
+          cleanedTeamMembers,
+      },
+
+      getAuthHeaders()
+    );
+
+
+    return response.data;
+
+  } catch (error) {
+
+    console.error(
+      "Create booking error:",
+      error
+    );
+
+    throw error;
+  }
 };
 
 
@@ -110,7 +178,9 @@ export const getMyBookings = async () => {
 // GET SINGLE BOOKING
 // ============================================================
 
-export const getBooking = async (bookingId) => {
+export const getBooking = async (
+  bookingId
+) => {
   const response = await axios.get(
     `${API_URL}/bookings/${bookingId}`,
     getAuthHeaders()

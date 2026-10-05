@@ -6,12 +6,14 @@ from app.models import Tournament, User
 from app.schemas.tournament import (
     TournamentCreate,
     TournamentResponse,
-    TournamentReject
+    TournamentReject,
+    TournamentUpdate
 )
 from app.core.permissions import (
     PE,
     COACH,
     SPORTS_COORDINATOR,
+    INTERNAL_STUDENT,
     require_roles
 )
 
@@ -38,7 +40,6 @@ def create_tournament_proposal(
         require_roles(COACH)
     )
 ):
-
     # Registration deadline must be before tournament date
     if (
         tournament_data.registration_deadline
@@ -87,7 +88,6 @@ def get_my_tournament_proposals(
         require_roles(COACH)
     )
 ):
-
     proposals = (
         db.query(Tournament)
         .filter(
@@ -116,7 +116,6 @@ def get_tournament_proposals(
         require_roles(SPORTS_COORDINATOR)
     )
 ):
-
     proposals = (
         db.query(Tournament)
         .order_by(
@@ -142,7 +141,6 @@ def get_approved_tournaments(
         require_roles(SPORTS_COORDINATOR)
     )
 ):
-
     tournaments = (
         db.query(Tournament)
         .filter(
@@ -155,6 +153,108 @@ def get_approved_tournaments(
     )
 
     return tournaments
+
+
+# =========================================================
+# SPORTS COORDINATOR - MANAGE APPROVED TOURNAMENT
+# =========================================================
+
+@router.put(
+    "/{tournament_id}/manage",
+    response_model=TournamentResponse
+)
+def manage_approved_tournament(
+    tournament_id: int,
+    tournament_data: TournamentUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(SPORTS_COORDINATOR)
+    )
+):
+    # -----------------------------------------------------
+    # Find tournament
+    # -----------------------------------------------------
+
+    tournament = (
+        db.query(Tournament)
+        .filter(
+            Tournament.id == tournament_id
+        )
+        .first()
+    )
+
+    if not tournament:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tournament not found"
+        )
+
+    # -----------------------------------------------------
+    # Only APPROVED tournaments can be managed
+    # -----------------------------------------------------
+
+    if tournament.status != "APPROVED":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Only approved tournaments can be managed. "
+                f"Current status: {tournament.status}"
+            )
+        )
+
+    # -----------------------------------------------------
+    # Get fields sent by the Sports Coordinator
+    # -----------------------------------------------------
+
+    update_data = tournament_data.model_dump(
+        exclude_unset=True
+    )
+
+    # -----------------------------------------------------
+    # Validate registration deadline
+    # -----------------------------------------------------
+
+    proposed_date = update_data.get(
+        "proposed_date",
+        tournament.proposed_date
+    )
+
+    registration_deadline = update_data.get(
+        "registration_deadline",
+        tournament.registration_deadline
+    )
+
+    if registration_deadline >= proposed_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Registration deadline must be before "
+                "the tournament date"
+            )
+        )
+
+    # -----------------------------------------------------
+    # Update permitted tournament information
+    # -----------------------------------------------------
+
+    for field, value in update_data.items():
+        setattr(
+            tournament,
+            field,
+            value
+        )
+
+    # -----------------------------------------------------
+    # IMPORTANT:
+    # Status is NOT changed here.
+    #
+    # If the tournament was APPROVED, it remains APPROVED.
+    # -----------------------------------------------------
+
+    db.commit()
+    db.refresh(tournament)
+
+    return tournament
 
 
 # =========================================================
@@ -171,7 +271,6 @@ def get_pending_approval_tournaments(
         require_roles(PE)
     )
 ):
-
     tournaments = (
         db.query(Tournament)
         .filter(
@@ -201,7 +300,6 @@ def forward_tournament_proposal(
         require_roles(SPORTS_COORDINATOR)
     )
 ):
-
     tournament = (
         db.query(Tournament)
         .filter(
@@ -211,14 +309,12 @@ def forward_tournament_proposal(
     )
 
     if not tournament:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tournament proposal not found"
         )
 
     if tournament.status != "PROPOSED":
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
@@ -250,7 +346,6 @@ def approve_tournament_proposal(
         require_roles(PE)
     )
 ):
-
     tournament = (
         db.query(Tournament)
         .filter(
@@ -260,14 +355,12 @@ def approve_tournament_proposal(
     )
 
     if not tournament:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tournament proposal not found"
         )
 
     if tournament.status != "FORWARDED":
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
@@ -277,9 +370,7 @@ def approve_tournament_proposal(
         )
 
     tournament.status = "APPROVED"
-
     tournament.approved_by = current_user.id
-
     tournament.rejection_reason = None
 
     db.commit()
@@ -304,7 +395,6 @@ def reject_tournament_proposal(
         require_roles(PE)
     )
 ):
-
     tournament = (
         db.query(Tournament)
         .filter(
@@ -314,14 +404,12 @@ def reject_tournament_proposal(
     )
 
     if not tournament:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tournament proposal not found"
         )
 
     if tournament.status != "FORWARDED":
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
@@ -331,9 +419,7 @@ def reject_tournament_proposal(
         )
 
     tournament.status = "REJECTED"
-
     tournament.approved_by = None
-
     tournament.rejection_reason = (
         rejection_data.rejection_reason
     )
@@ -343,6 +429,32 @@ def reject_tournament_proposal(
 
     return tournament
 
+# =========================================================
+# INTERNAL STUDENT - VIEW AVAILABLE TOURNAMENTS
+# =========================================================
+
+@router.get(
+    "/available",
+    response_model=list[TournamentResponse]
+)
+def get_available_tournaments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(INTERNAL_STUDENT)
+    )
+):
+    tournaments = (
+        db.query(Tournament)
+        .filter(
+            Tournament.status == "APPROVED"
+        )
+        .order_by(
+            Tournament.proposed_date.asc()
+        )
+        .all()
+    )
+
+    return tournaments
 
 # =========================================================
 # SPORTS COORDINATOR / COACH / PE
@@ -360,11 +472,11 @@ def get_tournament(
         require_roles(
             SPORTS_COORDINATOR,
             COACH,
-            PE
+            PE,
+            INTERNAL_STUDENT
         )
     )
 ):
-
     tournament = (
         db.query(Tournament)
         .filter(
@@ -374,7 +486,6 @@ def get_tournament(
     )
 
     if not tournament:
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tournament not found"

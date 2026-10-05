@@ -92,6 +92,7 @@ function StudentDashboard() {
             <button
               type="button"
               className="dashboard-action-card"
+              onClick={() => navigate("/student/tournaments")}
             >
               <h3>Tournament Schedules</h3>
 

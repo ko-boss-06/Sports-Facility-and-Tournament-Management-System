@@ -9,7 +9,10 @@ function CoordinatorDashboard() {
 
       <div className="page-container">
 
-        {/* Page Header */}
+        {/* =================================================
+            PAGE HEADER
+        ================================================= */}
+
         <div className="page-header">
 
           <div>
@@ -24,18 +27,26 @@ function CoordinatorDashboard() {
         </div>
 
 
-        {/* Coordinator Services */}
+        {/* =================================================
+            COORDINATOR SERVICES
+        ================================================= */}
+
         <div className="content-card">
 
           <h2>Coordinator Services</h2>
 
           <div className="dashboard-grid">
 
-            {/* Tournament Proposals */}
+            {/* =================================================
+                TOURNAMENT PROPOSALS
+            ================================================= */}
+
             <button
               type="button"
               className="dashboard-action-card"
-              onClick={() => navigate("/tournaments/proposals")}
+              onClick={() =>
+                navigate("/tournaments/proposals")
+              }
             >
               <h3>Tournament Proposals</h3>
 
@@ -46,11 +57,16 @@ function CoordinatorDashboard() {
             </button>
 
 
-            {/* Approved Tournaments */}
+            {/* =================================================
+                APPROVED TOURNAMENTS
+            ================================================= */}
+
             <button
               type="button"
               className="dashboard-action-card"
-             onClick={() => navigate("/tournaments/approved")}
+              onClick={() =>
+                navigate("/tournaments/approved")
+              }
             >
               <h3>Approved Tournaments</h3>
 
@@ -61,7 +77,30 @@ function CoordinatorDashboard() {
             </button>
 
 
-            {/* Tournament Schedule */}
+            {/* =================================================
+                TOURNAMENT MANAGEMENT
+            ================================================= */}
+
+            <button
+              type="button"
+              className="dashboard-action-card"
+              onClick={() =>
+                navigate("/tournaments/manage")
+              }
+            >
+              <h3>Tournament Management</h3>
+
+              <p>
+                Manage approved tournaments and update
+                tournament information.
+              </p>
+            </button>
+
+
+            {/* =================================================
+                TOURNAMENT SCHEDULE
+            ================================================= */}
+
             <button
               type="button"
               className="dashboard-action-card"
@@ -75,7 +114,10 @@ function CoordinatorDashboard() {
             </button>
 
 
-            {/* Sports Activities */}
+            {/* =================================================
+                SPORTS ACTIVITIES
+            ================================================= */}
+
             <button
               type="button"
               className="dashboard-action-card"
@@ -89,7 +131,10 @@ function CoordinatorDashboard() {
             </button>
 
 
-            {/* Teams */}
+            {/* =================================================
+                REGISTERED TEAMS
+            ================================================= */}
+
             <button
               type="button"
               className="dashboard-action-card"
@@ -103,7 +148,10 @@ function CoordinatorDashboard() {
             </button>
 
 
-            {/* Reports */}
+            {/* =================================================
+                SPORTS REPORTS
+            ================================================= */}
+
             <button
               type="button"
               className="dashboard-action-card"
